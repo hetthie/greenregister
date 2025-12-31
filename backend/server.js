@@ -23,6 +23,6 @@ app.use('/api', catalogRoutes);
 app.use('/api', myPlantsRoutes);
 app.use('/api', activitiesRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(` Servidor corriendo en http://localhost:${PORT}`);
 });
