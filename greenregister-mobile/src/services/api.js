@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://192.168.100.7:3000/api'; // Cambia TU_IP_LOCAL por tu IP
+const API_URL = 'https://greenregister-backend.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
