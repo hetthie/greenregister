@@ -64,7 +64,7 @@ export default function CatalogDetail({ route, navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>Volver</Text>
@@ -137,6 +137,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
     backgroundColor: '#2e7d32',
+  },
+  scrollContent: {        // ← AGREGAR ESTE ESTILO
+    paddingBottom: 250,
   },
   backButton: {
     color: '#fff',

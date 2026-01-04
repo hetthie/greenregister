@@ -150,4 +150,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  list: {
+  padding: 10,
+  paddingBottom: 50,  // ← AGREGAR ESTA LÍNEA
+},
 });

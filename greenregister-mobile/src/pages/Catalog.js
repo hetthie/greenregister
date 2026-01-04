@@ -55,7 +55,8 @@ export default function Catalog({ navigation }) {
         renderItem={renderPlant}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: 60 }]}
+        
       />
     </View>
   );

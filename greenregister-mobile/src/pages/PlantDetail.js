@@ -65,7 +65,7 @@ export default function PlantDetail({ route, navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>Volver</Text>
@@ -127,6 +127,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingBottom: 20,
+  },
+  scrollContent: {
+    paddingBottom: 50, 
   },
   header: {
     padding: 20,
