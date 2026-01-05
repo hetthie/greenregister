@@ -5,7 +5,9 @@ import api from '../services/api';
 export default function PlantDetail({ route, navigation }) {
   const { id } = route.params;
   const [plant, setPlant] = useState(null);
+  const [lastActivity, setLastActivity] = useState(null);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -18,6 +20,10 @@ export default function PlantDetail({ route, navigation }) {
     try {
       const response = await api.get(`/my-plants/${id}`);
       setPlant(response.data);
+      const actResponse = await api.get(`/activities/${id}`);
+      if(actResponse.data.length > 0) { 
+        setLastActivity(actResponse.data[0]);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -79,6 +85,14 @@ export default function PlantDetail({ route, navigation }) {
       
       <View style={styles.content}>
         <Text style={styles.nickname}>{plant.nickname}</Text>
+        {lastActivity && (
+          <View style={styles.lastActivity}>
+            <Text style={styles.lastActivityTitle}>Última actividad:</Text>
+            <Text style={styles.lastActivityText}>
+              {lastActivity.activity_type} - {new Date(lastActivity.activity_date).toLocaleDateString()}
+            </Text>
+          </View>
+        )}
         <Text style={styles.plantName}>{plant.name}</Text>
         <Text style={styles.date}>
           Adquirida: {new Date(plant.acquired_date).toLocaleDateString()}
@@ -129,6 +143,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingBottom: 20,
   },
+  lastActivity: {
+  backgroundColor: '#e8f5e9',
+  padding: 10,
+  borderRadius: 8,
+  marginBottom: 15,
+},
+lastActivityTitle: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#2e7d32',
+},
+lastActivityText: {
+  fontSize: 14,
+  color: '#555',
+  marginTop: 5,
+},
   scrollContent: {
     paddingBottom: 50, 
   },

@@ -5,6 +5,7 @@ import api from '../services/api';
 export default function ActivityHistory({ route, navigation }) {
   const { id } = route.params;
   const [activities, setActivities] = useState([]);
+  const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,6 +14,13 @@ export default function ActivityHistory({ route, navigation }) {
     });
     return unsubscribe;
   }, [navigation]);
+
+  const sortedActivities = [...activities].sort((a, b) => {
+    const dateA = new Date(a.activity_date);
+    const dateB = new Date(b.activity_date);
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
 
   const fetchActivities = async () => {
     try {
@@ -57,6 +65,16 @@ export default function ActivityHistory({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
+    <TouchableOpacity 
+      style={styles.sortButton}
+      onPress={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+    >
+      <Text style={styles.sortText}>
+        Ordenar: {sortOrder === 'desc' ? 'Más reciente primero' : 'Más antigua primero'}
+      </Text>
+    </TouchableOpacity>
+
+
       {activities.length === 0 ? (
         <View style={styles.center}>
           <Text>No hay actividades registradas</Text>
@@ -69,7 +87,7 @@ export default function ActivityHistory({ route, navigation }) {
         </View>
       ) : (
         <FlatList
-          data={activities}
+          data={sortedActivities}
           renderItem={renderActivity}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
@@ -84,6 +102,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  sortButton: {
+  backgroundColor: '#e0e0e0',
+  padding: 10,
+  margin: 10,
+  borderRadius: 8,
+  alignItems: 'center',
+},
+sortText: {
+  fontSize: 14,
+  color: '#333',
+},
   header: {
     padding: 20,
     paddingTop: 50,

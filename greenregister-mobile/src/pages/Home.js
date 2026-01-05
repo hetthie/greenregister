@@ -1,10 +1,18 @@
-import React, { useContext } from 'react';
+import React, { useContext,useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function Home({ navigation }) {
   const { user, logout } = useContext(AuthContext);
-
+  const [plantCount, setPlantCount] = useState(0);
+  useEffect(() => {
+  const loadCount = async () => {
+    const response = await api.get('/my-plants');
+    setPlantCount(response.data.length);
+  };
+  loadCount();
+}, []);
   const handleLogout = async () => {
     await logout();
   };
@@ -13,6 +21,8 @@ export default function Home({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>GreenRegister</Text>
       <Text style={styles.welcome}>Bienvenido, {user?.name}</Text>
+
+      <Text style={styles.plantCount}>Tienes {plantCount} plantas registradas</Text>
 
       <TouchableOpacity 
         style={styles.button}
@@ -41,6 +51,12 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     backgroundColor: '#fff',
+  },
+  plantCount: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 32,

@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, use } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, TextInput  } from 'react-native';
 import api from '../services/api';
 
 export default function MyPlants({ navigation }) {
   const [plants, setPlants] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-
+  const filteredPlants = plants.filter(plant =>
+    plant.nickname.toLowerCase().includes(search.toLowerCase())
+  );
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchMyPlants();
+      fetchMyPlants(); 
     });
     return unsubscribe;
   }, [navigation]);
@@ -55,7 +58,12 @@ export default function MyPlants({ navigation }) {
           <Text style={styles.addButton}>+ Agregar</Text>
         </TouchableOpacity>
       </View>
-
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Buscar por nombre..."
+        value={search}
+        onChangeText={setSearch}
+      />
       {plants.length === 0 ? (
         <View style={styles.center}>
           <Text>No tienes plantas todavía</Text>
@@ -65,10 +73,13 @@ export default function MyPlants({ navigation }) {
           >
             <Text style={styles.buttonText}>Agregar desde catálogo</Text>
           </TouchableOpacity>
+          
         </View>
+        
       ) : (
+        
         <FlatList
-          data={plants}
+          data={filteredPlants}
           renderItem={renderPlant}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
@@ -80,6 +91,13 @@ export default function MyPlants({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  searchInput: {
+  backgroundColor: '#f5f5f5',
+  padding: 12,
+  margin: 10,
+  borderRadius: 8,
+  fontSize: 16,
+},
   container: {
     flex: 1,
     backgroundColor: '#fff',
