@@ -1,5 +1,4 @@
-# greenregister
-# 🌱 GreenRegister
+# GreenRegister
 
 Aplicación móvil para la gestión inteligente de plantas ecuatorianas. Permite a los usuarios registrar sus plantas, llevar un historial de cuidados (riego, poda, trasplante, fertilización) y recibir recomendaciones basadas en intervalos específicos para cada especie.
 
