@@ -1,6 +1,7 @@
 import express from "express"; //creacion de servidos-rutas
 import dotenv from "dotenv"; // coneccion a otros origenes (front) a esta api
 import cors from "cors";//ver variables del archivo .env
+import authRoutes from './src/routes/auth.routes.js';
 
 dotenv.config(); //variables de entorno
 
@@ -15,6 +16,8 @@ app.use(express.json()); //habilitar el parseo de json en todas las rutas
 app.get("/", (req, res) => {
   res.send("Hello World!");//ruta de pruea para saber si funciono 
 });
+
+app.use('/auth', authRoutes); //usar las rutas de autenticacion
 
 app.listen(PORT,'0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
