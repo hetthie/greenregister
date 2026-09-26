@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';// para hashear la contrasenia
 import pool from '../config/db.js';// para la conexion a la base de datos
 
 //control del registro de usuarios
-export async function registerUser(req, res) {
+export async function register(req, res) {
     const { usuario_nombre,usuario_apellido, usuario_email,usuario_password} = req.body; // se extraen los datos del cuerpo de la solicitud
     
     //validacion basica
@@ -12,7 +12,7 @@ export async function registerUser(req, res) {
 
     try{
         const existe = await pool.query(
-            'SELECT * FROM usuarios WHERE usuario_email = $1',
+            'SELECT * FROM usuario WHERE usuario_email = $1',
             [usuario_email]
         );//extraemos al usuario existente
 
@@ -24,7 +24,7 @@ export async function registerUser(req, res) {
 
         //SE INSERTA AL NUEVO USUARIO
         const resultado = await pool.query(
-            'INSERT INTO usuarios (usuario_nombre, usuario_apellido, usuario_email, usuario_password) VALUES ($1, $2, $3, $4) RETURNING id_usuario, usuario_nombre , usuario_apellido, usuario_email',
+            'INSERT INTO usuario (usuario_nombre, usuario_apellido, usuario_email, usuario_password) VALUES ($1, $2, $3, $4) RETURNING id_usuario, usuario_nombre , usuario_apellido, usuario_email',
             [usuario_nombre, usuario_apellido, usuario_email, passwordHasheada]
         );
         res.status(201).json({ message: 'Usuario registrado exitosamente', user: resultado.rows[0] });
