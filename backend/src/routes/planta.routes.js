@@ -7,6 +7,6 @@ import {authMiddleware} from '../middlewares/authMiddleware.js'
 const router = Router();
 
 router.post('/',authMiddleware,crearPlanta);
-router.post('/',authMiddleware,listarPlantas);
+router.get('/',authMiddleware,listarPlantas);
 
 export default router;
