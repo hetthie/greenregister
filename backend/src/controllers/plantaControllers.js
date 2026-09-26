@@ -19,3 +19,21 @@ export async function crearPlanta(req,res){
         );
     }
 }
+
+
+
+export async function listarPlantas(req,res){
+    const id_usuario_fk = req.usuario.id_usuario
+
+    try{
+        const resultado = await pool.query(
+            'SELECT * FROM planta WHERE id_usuario_fk = $1 ORDER BY pla_fecharegistro DESC',
+            [id_usuario_fk]
+        );
+
+        res.status(200).json(resultado.rows);
+    }catch(error){
+        console.error('error al listar las plantas',error.message);
+        res.status(500).json({message: 'error al obtener las plantas'})
+    }
+}
