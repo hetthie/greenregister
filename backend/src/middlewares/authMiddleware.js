@@ -1,23 +1,24 @@
-import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/jwt.js';
+import jwt from 'jsonwebtoken'; //importar jsonwebtoken para generar el token
 
-export const authMiddleware = (req, res, next) => {
-  try {
-    // Obtener token del header
-    const token = req.headers.authorization?.split(' ')[1]; // "Bearer TOKEN"
-    
-    if (!token) {
-      return res.status(401).json({ error: 'Token no proporcionado' });
+//midleware para proteger rutas, , va antes de controller
+export function authMiddleware(req, res, next) {
+    //token viaja en el header "AUTHORIZATION: Bearer <token>"
+    const authHeader = req.headers.authorization; //se extrae el header de la solicitud
+
+    if(!authHeader || !authHeader.startsWith('Bearer ')){
+        return res.status(401).json({ message: 'No autorizado, token no proporcionado' });
+
     }
+    const token = authHeader.split(' ')[1]; //se extrae el token del header
+    try{
+        const payload = jwt.verify(token, process.env.JWT_SECRET); //se verifica el token con la clave secreta
 
-    // Verificar token
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    // Agregar user_id a la request
-    req.userId = decoded.userId;
-    
-    next(); // Continuar al siguiente middleware/controlador
-  } catch (error) {
-    return res.status(401).json({ error: 'Token inválido o expirado' });
-  }
-};
+        //se guardan datos del usuario
+        req.usuario = payload;
+
+        next(); //se pasa al siguiente middleware o controlador
+    }catch(error){
+        //token invalido o expirado
+        return res.status(401).json({ message: 'No autorizado, token invalido' });
+    }
+}

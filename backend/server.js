@@ -1,28 +1,27 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express"; //creacion de servidos-rutas
+import dotenv from "dotenv"; // coneccion a otros origenes (front) a esta api
+import cors from "cors";//ver variables del archivo .env
 import authRoutes from './src/routes/auth.routes.js';
-import catalogRoutes from './src/routes/catalog.routes.js';
-import myPlantsRoutes from './src/routes/myPlants.routes.js';
-import activitiesRoutes from './src/routes/activities.routes.js';
+import plantaRoutes from './src/routes/planta.routes.js';
 
-dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+dotenv.config(); //variables de entorno
 
-app.use(cors());
-app.use(express.json());
+const app = express(); //creacion de servidor
 
-app.get('/', (req, res) => {
-  res.json({ message: ' GreenRegister API funcionando' });
+const PORT = process.env.PORT || 3000; //puerto de escucha
+
+app.use(cors()); //habilitar cors en todas las rutas
+
+app.use(express.json()); //habilitar el parseo de json en todas las rutas
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");//ruta de pruea para saber si funciono 
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api', catalogRoutes);
-app.use('/api', myPlantsRoutes);
-app.use('/api', activitiesRoutes);
+app.use('/auth', authRoutes); //usar las rutas de autenticacion
+app.use('/plantas',plantaRoutes)
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(` Servidor corriendo en http://localhost:${PORT}`);
-});
+app.listen(PORT,'0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+});//levata servidor y escucha las interfaces en el puerto definido

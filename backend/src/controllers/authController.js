@@ -1,82 +1,87 @@
-import pool from '../config/database.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';// para hashear la contrasenia
+import pool from '../config/db.js';// para la conexion a la base de datos
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/jwt.js';
 
-// Registro de usuario
-export const register = async (req, res) => {
-  const { email, password, name } = req.body;
+//control del registro de usuarios
+export async function register(req, res) {
+    const { usuario_nombre,usuario_apellido, usuario_email,usuario_password} = req.body; // se extraen los datos del cuerpo de la solicitud
+    
+    //validacion basica
+    if(!usuario_nombre || !usuario_apellido || !usuario_email || !usuario_password){
+        return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+    }//comprobamos que fueron ingresados todos los datos.
 
-  try {
-    // Verificar si el usuario ya existe
-    const userExists = await pool.query(
-      'SELECT * FROM public.users WHERE email = $1',  // ← CAMBIO AQUÍ
-      [email]
-    );
+    try{
+        const existe = await pool.query(
+            'SELECT * FROM usuario WHERE usuario_email = $1',
+            [usuario_email]
+        );//extraemos al usuario existente
 
-    if (userExists.rows.length > 0) {
-      return res.status(400).json({ error: 'El email ya está registrado' });
+        if(existe.rows.length > 0){
+            return res.status(400).json({ message: 'El correo ya esta registrado' });
+        }//comprobamos que el correo no este registrado
+
+        const passwordHasheada = await bcrypt.hash(usuario_password, 10); // se hashea la contraseña con un salt de 10
+
+        //SE INSERTA AL NUEVO USUARIO
+        const resultado = await pool.query(
+            'INSERT INTO usuario (usuario_nombre, usuario_apellido, usuario_email, usuario_password) VALUES ($1, $2, $3, $4) RETURNING id_usuario, usuario_nombre , usuario_apellido, usuario_email',
+            [usuario_nombre, usuario_apellido, usuario_email, passwordHasheada]
+        );
+        res.status(201).json({ message: 'Usuario registrado exitosamente', user: resultado.rows[0] });
+    } catch (error) {//revisamos si hubo algun error en la conexion a la base de datos
+        console.error('Error al registrar usuario:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+    
+}
+
+
+//funciones de login que verifica las credenciales y devuelve un JWT si son correstas.
+export async function login(req,res){
+    //extraemos el email y password
+    const {
+        usuario_email,usuario_password
+    } = req.body;
+
+    //validamos los campos extraidos
+    if(!usuario_email || !usuario_password){
+        return res.status(400).json({ message: 'Todos los campos son obligatorios' });
     }
 
-    // Encriptar contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    try{
+        const resultado = await pool.query(
+            'SELECT * FROM usuario WHERE usuario_email = $1',
+            [usuario_email]
+        );//buscamos al usuario en la base de datos
 
-    // Crear usuario
-    const result = await pool.query(
-      'INSERT INTO public.users (email, password, name) VALUES ($1, $2, $3) RETURNING id, email, name, created_at',  // ← CAMBIO AQUÍ
-      [email, hashedPassword, name]
-    );
+        if(resultado.rows.length === 0){
+            return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
+        }//si no existe el usuario retornamos un error
 
-    const user = result.rows[0];
+        const user = resultado.rows[0];//extraemos al usuario
 
-    // Generar token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const passwordValida = await bcrypt.compare(usuario_password, user.usuario_password);//comparamos la contraseña ingresada con la hasheada
 
-    res.status(201).json({
-      message: 'Usuario registrado exitosamente',
-      user: { id: user.id, email: user.email, name: user.name },
-      token
-    });
-  } catch (error) {
-    console.error('Error en registro:', error);
-    res.status(500).json({ error: 'Error al registrar usuario' });
-  }
-};
+        if(!passwordValida){
+            return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
+        }
 
-// Login de usuario
-export const login = async (req, res) => {
-  const { email, password } = req.body;
+        //si la contraseña es correcta generamos un token JWT
+        //expiresIN: det el tiempo en el que el token expira, en este caso 2 dias
+        const token = jwt.sign(
+            {
+                id_usuario: user.id_usuario,
+            },process.env.JWT_SECRET,
+            { expiresIn: '2d' }
+        );
 
-  try {
-    // Buscar usuario
-    const result = await pool.query(
-      'SELECT * FROM public.users WHERE email = $1',  // ← CAMBIO AQUÍ
-      [email]
-    );
+        //Devolvemos el token el token
+        res.json({token});
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }catch(error){
+        console.error('Error al iniciar sesión:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
     }
 
-    const user = result.rows[0];
-
-    // Verificar contraseña
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
-    }
-
-    // Generar token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-    res.json({
-      message: 'Login exitoso',
-      user: { id: user.id, email: user.email, name: user.name },
-      token
-    });
-  } catch (error) {
-    console.error('Error en login:', error);
-    res.status(500).json({ error: 'Error al iniciar sesión' });
-  }
-};
+}
