@@ -41,19 +41,22 @@ GreenRegister elimina la incertidumbre al proporcionar:
 - **JavaScript** (ES6+)
 
 ### Backend
-- **Node.js** v18+
-- **Express.js** v4
-- **PostgreSQL** 15
+- **Node.js** v18+ (ES Modules, `"type": "module"`)
+- **Express.js** v5
+- **PostgreSQL** (v17, via Supabase)
+- **pg** (node-postgres) para conexión directa a la BD, sin ORM
 - **JWT** (jsonwebtoken) para autenticación
 - **Bcrypt** para encriptación de contraseñas
 - **CORS** habilitado
-- Deployed en **Render.com**
+- **Vitest** para testing unitario
+- Desarrollo local por ahora (deploy pendiente)
 
 ### Base de Datos
 - **PostgreSQL** (Supabase)
-- **Pooler Connection** para mejor rendimiento
-- 4 tablas relacionadas con CASCADE
-- Región: South America (São Paulo)
+- **Connection Pooler** (`aws-0-us-east-2.pooler.supabase.com:6543`) en vez de conexión directa
+- 10 tablas relacionadas (usuario, catalogo, planta, medicina, horticultura, comida, componente, ingrediente, y sus tablas intermedias N:N)
+- Row Level Security (RLS) activado
+- Región: us-east-2
 
 ---
 
@@ -78,105 +81,112 @@ GreenRegister elimina la incertidumbre al proporcionar:
 └─────────────────┘
 ```
 
----
-
-## 🗄️ Modelo de Datos
-
-### Tabla: `users`
-```sql
-- id (UUID, PK)
-- email (TEXT, UNIQUE)
-- password (TEXT, bcrypt)
-- name (TEXT)
-- created_at (TIMESTAMP)
+Flujo interno de una petición:
 ```
-
-### Tabla: `plants_catalog`
-```sql
-- id (BIGINT, PK)
-- name (TEXT)
-- image_url (TEXT)
-- water_interval_days (INT)
-- water_description (TEXT)
-- pruning_interval_days (INT)
-- pruning_description (TEXT)
-- transplant_interval_days (INT)
-- transplant_description (TEXT)
-- fertilization_interval_days (INT)
-- fertilization_description (TEXT)
-- light_requirement (TEXT)
-- care_notes (TEXT)
-```
-
-### Tabla: `my_plants`
-```sql
-- id (BIGINT, PK)
-- user_id (UUID, FK → users)
-- plant_id (BIGINT, FK → plants_catalog)
-- nickname (TEXT)
-- acquired_date (DATE)
-- created_at (TIMESTAMP)
-```
-
-### Tabla: `activities`
-```sql
-- id (BIGINT, PK)
-- my_plant_id (BIGINT, FK → my_plants)
-- activity_type (TEXT)
-- activity_date (TIMESTAMP)
-- notes (TEXT)
-- created_at (TIMESTAMP)
+Cliente (Postman / App)
+   ↓
+server.js (Express, escucha el puerto)
+   ↓
+router (routes/*.routes.js) — mapea URL + método HTTP a un controller
+   ↓
+controller (controllers/*.js) — valida datos, arma la lógica
+   ↓ (rutas protegidas pasan primero por authMiddleware)
+db.js (pool de pg) — ejecuta la query
+   ↓
+PostgreSQL (Supabase)
 ```
 
 ---
 
-## 🌿 Catálogo de Plantas
+## 🗄️ Modelo de Datos (backend actual)
 
-El sistema incluye 10 plantas ecuatorianas comunes:
+Esquema real en Supabase (10 tablas), todas en snake_case:
 
-1. **Rosa** - Ornamental con requerimientos específicos de poda
-2. **Geranio** - Resistente y fácil de mantener
-3. **Hortensia** - Requiere humedad constante
-4. **Clavel** - Popular en jardines ecuatorianos
-5. **Azalea** - Prefiere sombra parcial
-6. **Hierba Luisa** - Aromática y medicinal
-7. **Menta** - Crece rápido, requiere control
-8. **Romero** - Resistente a sequía
-9. **Albahaca** - Ideal para cocina
-10. **Toronjil** - Propiedades relajantes
+### Tabla: `usuario`
+```sql
+- id_usuario (INTEGER, PK)
+- usuario_nombre (VARCHAR)
+- usuario_apellido (VARCHAR)
+- usuario_email (VARCHAR)
+- usuario_password (VARCHAR, hash bcrypt)
+```
+
+### Tabla: `catalogo`
+```sql
+- id_catalogo (INTEGER, PK)
+- cat_tipo (VARCHAR)
+- cat_descripcion (VARCHAR)
+```
+
+### Tabla: `planta`
+```sql
+- id_planta (INTEGER, PK)
+- pla_nombre (VARCHAR)
+- pla_fecharegistro (DATE)
+- id_usuario_fk (INTEGER, FK → usuario)
+- id_catalogo_fk (INTEGER, FK → catalogo)
+```
+
+### Tabla: `medicina` / `horticultura` / `comida`
+```sql
+- id_[tabla] (INTEGER, PK)
+- [prefijo]_nombre (VARCHAR)
+- [prefijo]_descripcion (VARCHAR)
+- id_catalogo_fk (INTEGER, FK → catalogo)
+```
+
+### Tablas intermedias (N:N)
+- `medicina_componente` ↔ `componente` (componentes activos de una medicina)
+- `comida_ingrediente` ↔ `ingrediente` (ingredientes de una receta)
+
+> Nota: este modelo reemplaza al modelo anterior (`users`, `plants_catalog`,
+> `my_plants`, `activities`) que documentaba este README antes — el backend
+> se reconstruyó desde cero con un esquema más normalizado.
 
 ---
 
-## 🔌 API Endpoints
+---
 
-### Base URL
-- **Producción:** `https://greenregister-backend.onrender.com/api`
+## 🌿 Catálogo de Especies
+
+El catálogo actual en Supabase tiene 3 especies de prueba cargadas
+(manzanilla, sábila, menta). El listado final de especies ecuatorianas
+y su información de medicina/horticultura/comida está pendiente de
+completar a medida que avanzan esos módulos del backend.
+
+---
+
+## 🔌 API Endpoints (backend actual)
+
+### Base URL (desarrollo local)
+```
+http://localhost:3000
+```
+(sin prefijo `/api` — decisión deliberada, backend solo-API)
 
 ### Autenticación (Público)
 ```
 POST /auth/register  → Crear cuenta
-POST /auth/login     → Iniciar sesión
+POST /auth/login     → Iniciar sesión (devuelve JWT)
 ```
 
-### Catálogo (Público)
+### Plantas (Requiere JWT)
 ```
-GET /catalog         → Listar plantas
-GET /catalog/:id     → Detalle de planta
-```
-
-### Mis Plantas (Requiere JWT)
-```
-GET    /my-plants       → Listar mis plantas
-GET    /my-plants/:id   → Detalle de mi planta
-POST   /my-plants       → Agregar planta
-PUT    /my-plants/:id   → Editar nickname
-DELETE /my-plants/:id   → Eliminar planta
+POST /plantas   → Registrar una planta propia
+GET  /plantas   → Listar mis plantas
 ```
 
-### Actividades (Requiere JWT)
+### Catálogo (Requiere JWT)
 ```
-GET  /activities/:plant_id  → Historial de actividades
-POST /activities            → Registrar actividad
+GET /catalogo               → Listar catálogo de especies
+GET /catalogo/:id/medicina  → Info medicinal + componentes de una especie
+```
+
+### Pendiente de construir
+```
+GET /catalogo/:id/horticultura  → no implementado aún
+GET /catalogo/:id/comida        → no implementado aún
+/activities                     → módulo de actividades de cuidado, no implementado aún
 ```
 
 ---
@@ -267,10 +277,11 @@ eas build -p android --profile preview
 
 ## 🚧 Limitaciones Conocidas
 
-1. **Render Free Tier:** El servidor se duerme tras 15 min de inactividad. Primera petición puede tardar 30-60s.
-2. **Imágenes:** Las imágenes de plantas son predefinidas (Pexels/Unsplash), no permite fotos personalizadas.
-3. **Notificaciones:** No implementa notificaciones push automáticas.
-4. **Offline:** Requiere conexión a internet constante.
+1. **Sin deploy todavía:** el backend corre en local (`npm run dev`), no hay una URL pública activa aún.
+2. **Módulos incompletos:** horticultura, comida y actividades de cuidado aún no están implementados.
+3. **Catálogo de prueba:** solo 3 especies cargadas, sin imágenes.
+4. **Tests parciales:** solo `register` de auth tiene tests unitarios (Vitest); el resto del backend aún depende de pruebas manuales en Postman.
+5. **Offline:** requiere conexión a internet constante (BD en Supabase).
 
 ---
 
