@@ -8,7 +8,7 @@ export async function listarCatalogo(req,res){
         );
 
         return res.status(200).json(resultado.rows);
-    }catch{
+    }catch(error){
         console.error('error al consultar el catalogo de plantas');
         res.status(500).json({message: 'error al mostrar el catalogo'});
     }
