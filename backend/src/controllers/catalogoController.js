@@ -90,3 +90,22 @@ export async function obtenerComidaPorCatalogo(req,res){
         res.status(500).json({message: 'Error al obtener los componetes de la comida.'});
     }
 }
+
+export async function obtenerHorticulturaPorCatalogo(req,res){
+    const {id} = req.params;
+     try{
+        const resultado = await pool.query(
+            'SELECT * FROM horticultura WHERE id_catalogo_fk = $1',
+            [id]
+        );
+
+        if(resultado.rows.length === 0){
+            return res.status(404).json({message:'El elemento de horticultura asociada a la planta no existe.'});
+        }
+
+        res.status(200).json(resultado.rows);
+     }catch(error){
+        console.error("El no se pudo realizar la busqueda",error);
+        res.status(500).json({message: "El no se pudo realizar la busqueda"});
+     }
+}
