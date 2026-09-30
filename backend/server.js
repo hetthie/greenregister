@@ -3,7 +3,7 @@ import dotenv from "dotenv"; // coneccion a otros origenes (front) a esta api
 import cors from "cors";//ver variables del archivo .env
 import authRoutes from './src/routes/auth.routes.js';
 import plantaRoutes from './src/routes/planta.routes.js';
-
+import catalogoRoutes from './src/routes/catalogo.routes.js';
 
 dotenv.config(); //variables de entorno
 
@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
 
 app.use('/auth', authRoutes); //usar las rutas de autenticacion
 app.use('/plantas',plantaRoutes)
+app.use('/catalogo',catalogoRoutes)
 
 app.listen(PORT,'0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
