@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 
-export default function Home({ navigation }) {
+export default function Sustentacion({ navigation }) {
   const { user, logout } = useContext(AuthContext);
 
   const handleLogout = async () => {
@@ -14,37 +14,12 @@ export default function Home({ navigation }) {
       <Text style={styles.title}>GreenRegister</Text>
       <Text style={styles.welcome}>Bienvenido, {user?.name}</Text>
 
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => navigation.navigate('Catalog')}
-      >
-        <Text style={styles.buttonText}>Ver Catálogo</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => navigation.navigate('MyPlants')}
-      >
-        <Text style={styles.buttonText}>Mis Plantas</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => navigation.navigate('Sustentacion')}
-      >
-        <Text style={styles.buttonText}>Sustentación</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => navigation.navigate('ConsumoApi')}
-      >
-        <Text style={styles.buttonText}>Consumo de API publica</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
+    <TouchableOpacity 
+            style={styles.button}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.buttonText}>regresar</Text>
+          </TouchableOpacity>
     </View>
   );
 }

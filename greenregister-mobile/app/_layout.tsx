@@ -10,6 +10,9 @@ import CatalogDetail from '../src/pages/CatalogDetail';
 import PlantDetail from '../src/pages/PlantDetail';
 import RegisterActivity from '../src/pages/RegisterActivity';
 import ActivityHistory from '../src/pages/ActivityHistory';
+import Sustentacion from '../src/pages/Sustentacion';
+import PantallaPrev from '../src/pages/PantallaPrev';
+import ConsumoApi from '../src/pages/ConsumoApi';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,9 +34,13 @@ function Navigation() {
           <Stack.Screen name="PlantDetail" component={PlantDetail} />
           <Stack.Screen name="RegisterActivity" component={RegisterActivity} />
           <Stack.Screen name="ActivityHistory" component={ActivityHistory} />
+          <Stack.Screen name="Sustentacion" component={Sustentacion} />
+          <Stack.Screen name="ConsumoApi" component={ConsumoApi} />
+
         </>
       ) : (
         <>
+          <Stack.Screen name="PantallaPrev" component={PantallaPrev} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Register" component={Register} />
         </>

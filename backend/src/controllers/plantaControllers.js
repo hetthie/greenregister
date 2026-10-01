@@ -37,3 +37,26 @@ export async function listarPlantas(req,res){
         res.status(500).json({message: 'error al obtener las plantas'})
     }
 }
+
+
+export async function actualizarPlanta(req,res){
+    const {id} = req.params;
+    const {pla_nombre} = req.body;
+    const id_usuario_fk = req.usuario.id_usuario;
+
+    try{
+        const resultado = await pool.query(
+            'UPDATE planta SET pla_nombre = $1 WHERE id_planta = $2 AND id_usuario_fk = $3 RETURNING *',
+            [pla_nombre,id,id_usuario_fk]
+        );
+
+        if(resultado.rows.length === 0){
+            return res.status(404).json({message: 'Planta no encontrada.'});
+        }
+
+        return res.status(200).json(resultado.rows[0]);
+    }catch(error){
+        console.error('Error al actualizar la planta',error);
+        res.status(500).json({message: 'Error al actualziar la planta.'})
+    }
+}

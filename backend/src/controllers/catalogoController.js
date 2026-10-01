@@ -53,3 +53,59 @@ export async function obtenerMedicinaPorCatalogo(req,res){
         res.status(500).json({message:'Error al obtener informacion medicinal'});
     }
 }
+
+
+export async function obtenerComidaPorCatalogo(req,res){
+
+    const {id} = req.params;
+
+    try{
+        const comida = await pool.query(
+            'SELECT * FROM comida WHERE id_catalogo_fk = $1',
+            [id]
+        );
+
+        if(comida.rows.length === 0){
+            return res.status(404).json({message: 'no se encontro el elemento'});
+        }
+
+        const idComida = comida.rows.map((c) => c.id_comida);
+        
+        const ingredientes = await pool.query(
+            `SELECT ci.id_comida_fk, i.*
+            FROM comida_ingrediente ci
+            JOIN ingrediente i ON i.id_ingrediente = ci.id_ingrediente_fk
+            WHERE ci.id_comida_fk = ANY($1::int[])`,
+            [idComida]
+        );
+
+        const resultado = comida.rows.map((c) => ({
+            ...c,
+            ingredientes: ingredientes.rows.filter((i)=> i.id_comida_fk === c.id_comida),
+        }));
+
+        res.status(200).json(resultado);
+    }catch(error){
+        console.error('Error al optener los componetes',error);
+        res.status(500).json({message: 'Error al obtener los componetes de la comida.'});
+    }
+}
+
+export async function obtenerHorticulturaPorCatalogo(req,res){
+    const {id} = req.params;
+     try{
+        const resultado = await pool.query(
+            'SELECT * FROM horticultura WHERE id_catalogo_fk = $1',
+            [id]
+        );
+
+        if(resultado.rows.length === 0){
+            return res.status(404).json({message:'El elemento de horticultura asociada a la planta no existe.'});
+        }
+
+        res.status(200).json(resultado.rows);
+     }catch(error){
+        console.error("El no se pudo realizar la busqueda",error);
+        res.status(500).json({message: "El no se pudo realizar la busqueda"});
+     }
+}

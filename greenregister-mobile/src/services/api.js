@@ -1,9 +1,14 @@
 import axios from 'axios';
 
 const API_URL = 'https://greenregister-backend.onrender.com/api';
+const API_URL2 = 'https://pokeapi.co/api/v2/evolution-chain/1/';
 
 const api = axios.create({
   baseURL: API_URL,
+});
+
+const apiP = axios.create({
+  baseURL: API_URL2,
 });
 
 let token = null;
@@ -22,3 +27,5 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
+export { apiP };
