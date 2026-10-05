@@ -48,7 +48,7 @@ GreenRegister elimina la incertidumbre al proporcionar:
 - **JWT** (jsonwebtoken) para autenticación
 - **Bcrypt** para encriptación de contraseñas
 - **CORS** habilitado
-- **Vitest** para testing unitario
+- **Vitest** para pruebas unitarias y de rutas HTTP con base de datos simulada
 - Desarrollo local por ahora (deploy pendiente)
 
 ### Base de Datos
@@ -174,18 +174,19 @@ POST /auth/login     → Iniciar sesión (devuelve JWT)
 ```
 POST /plantas   → Registrar una planta propia
 GET  /plantas   → Listar mis plantas
+PUT  /plantas/:id → Actualizar el nombre de una planta propia
 ```
 
 ### Catálogo (Requiere JWT)
 ```
 GET /catalogo               → Listar catálogo de especies
 GET /catalogo/:id/medicina  → Info medicinal + componentes de una especie
+GET /catalogo/:id/horticultura → Info de horticultura de una especie
+GET /catalogo/:id/comida       → Info alimentaria + ingredientes de una especie
 ```
 
 ### Pendiente de construir
 ```
-GET /catalogo/:id/horticultura  → no implementado aún
-GET /catalogo/:id/comida        → no implementado aún
 /activities                     → módulo de actividades de cuidado, no implementado aún
 ```
 
@@ -267,21 +268,59 @@ eas build -p android --profile preview
 
 ## 🔐 Seguridad
 
-- **Contraseñas:** Encriptadas con bcrypt (10 rounds)
-- **Autenticación:** JWT con expiración de 7 días
+- **Contraseñas:** Hash con bcrypt (10 rounds)
+- **Autenticación:** JWT con expiración de 2 días
 - **Autorización:** Middleware valida token en cada petición protegida
-- **Ownership:** Queries SQL verifican `user_id` para evitar acceso cruzado
-- **CORS:** Configurado para orígenes permitidos
+- **Ownership:** El listado y la actualización de plantas filtran por `id_usuario_fk`; la creación toma el propietario del JWT
+- **CORS:** Habilitado sin restricción de orígenes; pendiente definir los permitidos según el despliegue
+
+---
+
+## Progreso y estado actual del backend
+
+Estado verificado en la rama `v1` el 5 de octubre de 2026. Esta actualización se limita al backend; no confirma el estado de las pantallas móviles ni el despliegue.
+
+- [x] Registro de usuarios con hash de contraseña e inicio de sesión con JWT.
+- [x] Protección de las rutas de plantas y catálogo mediante middleware.
+- [x] Creación, listado por usuario y actualización del nombre de plantas propias.
+- [x] Consulta de catálogo, medicina con componentes, comida con ingredientes y horticultura.
+- [x] Pruebas de autenticación, middleware, plantas, catálogo y rutas HTTP.
+- [ ] Módulo de actividades de cuidado e historial.
+- [ ] Validación completa de tipos, formatos, longitudes e identificadores.
+- [ ] Definición de reglas de duplicados y ciclo de vida de plantas y cuentas.
+- [ ] Esquema y migraciones de PostgreSQL versionados en `backend`.
+- [ ] Pruebas de integración contra PostgreSQL para verificar restricciones y concurrencia.
+- [ ] Paginación, contrato de errores consistente y documentación detallada de la API.
+- [ ] Controles de intentos de acceso, recuperación de contraseña y política de revocación de tokens según los requisitos del producto.
+- [ ] Validación inicial de configuración, comprobaciones de disponibilidad y cierre ordenado del servicio.
+
+### Pruebas del backend
+
+```bash
+cd backend
+npm ci
+npm test -- --run
+```
+
+Última ejecución: **69 pruebas aprobadas en 3 archivos**, correspondientes al commit `33470d8`.
+
+- `backend/test/authController.test.js`: escenarios básicos de registro.
+- `backend/test/backend.test.js`: controladores, JWT, errores y parámetros de propietario autenticado.
+- `backend/test/routes.test.js`: rutas HTTP públicas y protegidas, con JWT válidos e inválidos.
+
+Las pruebas simulan PostgreSQL y bcrypt. Comprueban el comportamiento del backend y el uso del propietario en las consultas, pero no demuestran las restricciones, políticas RLS ni el aislamiento real de PostgreSQL. No se conectaron a Supabase para esta verificación.
 
 ---
 
 ## 🚧 Limitaciones Conocidas
 
 1. **Sin deploy todavía:** el backend corre en local (`npm run dev`), no hay una URL pública activa aún.
-2. **Módulos incompletos:** horticultura, comida y actividades de cuidado aún no están implementados.
+2. **Módulos incompletos:** las actividades de cuidado y su historial aún no están implementados; las consultas de horticultura y comida ya están disponibles en el backend.
 3. **Catálogo de prueba:** solo 3 especies cargadas, sin imágenes.
-4. **Tests parciales:** solo `register` de auth tiene tests unitarios (Vitest); el resto del backend aún depende de pruebas manuales en Postman.
+4. **Base de datos sin verificación automatizada real:** las 69 pruebas cubren controladores, autenticación y rutas HTTP con dependencias simuladas; faltan pruebas contra PostgreSQL.
 5. **Offline:** requiere conexión a internet constante (BD en Supabase).
+6. **Integridad pendiente de confirmar:** no hay esquema ni migraciones en `backend` que permitan verificar unicidad del correo, claves foráneas o reglas de eliminación. La consulta previa al registro no garantiza por sí sola evitar duplicados concurrentes.
+7. **Conexión y operación:** PostgreSQL usa SSL con `rejectUnauthorized: false`; faltan verificación del certificado según el entorno y controles de operación del servicio.
 
 ---
 
