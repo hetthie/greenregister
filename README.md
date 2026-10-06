@@ -182,6 +182,7 @@ PUT  /plantas/:id → Actualizar el nombre de una planta propia
 ### Catálogo (Requiere JWT)
 ```
 GET /catalogo               → Listar catálogo de especies
+GET /catalogo/:id           → Consultar una especie por identificador
 GET /catalogo/:id/medicina  → Info medicinal + componentes de una especie
 GET /catalogo/:id/horticultura → Info de horticultura de una especie
 GET /catalogo/:id/comida       → Info alimentaria + ingredientes de una especie
@@ -304,6 +305,9 @@ Estado verificado en la rama `v1` el 5 de octubre de 2026. Esta actualización s
 - `DELETE /plantas/:id`: elimina una planta del usuario autenticado y responde `204` sin cuerpo. Devuelve `400` para un ID inválido, `404` si no existe o pertenece a otro usuario, `409` si una clave foránea impide eliminarla y `500` ante otros fallos. La eliminación es física; las relaciones y posibles cascadas dependen del esquema existente de PostgreSQL. No modifica las tablas ni sus restricciones.
 - Los nuevos identificadores deben ser enteros positivos, sin ceros iniciales, dentro del rango PostgreSQL `INTEGER` (hasta `2147483647`).
 - Cada endpoint se incorpora mediante un commit independiente con su implementación, pruebas y documentación. Esta actualización no implica un despliegue ni cambios en Supabase.
+- `GET /catalogo/:id`: requiere JWT y devuelve un objeto especie (`200`), `400` para un ID inválido, `404` si no existe y `500` ante un fallo interno. Mantiene las rutas de información relacionada.
+- El esquema compartido el 6 de octubre no incluye una tabla de actividades. Su registro e historial siguen pendientes de definir esa tabla; no se ejecutó el SQL compartido.
+- Las pantallas móviles que usan `/my-plants` necesitan adaptarse a `/plantas`. Esta implementación se limita al backend.
 
 ### Ejecución de pruebas
 
@@ -314,10 +318,12 @@ npm test -- --run
 ```
 
 Última ejecución: **69 pruebas aprobadas en 3 archivos**, correspondientes al commit `33470d8`.
+Tras incorporar estos tres endpoints: **101 pruebas aprobadas en 4 archivos**, el 6 de octubre de 2026, con PostgreSQL simulado.
 
 - `backend/test/authController.test.js`: escenarios básicos de registro.
 - `backend/test/backend.test.js`: controladores, JWT, errores y parámetros de propietario autenticado.
 - `backend/test/routes.test.js`: rutas HTTP públicas y protegidas, con JWT válidos e inválidos.
+- `backend/test/endpointDetalles.test.js`: nuevos endpoints de plantas y catálogo, validación de ID, autenticación y errores.
 
 Las pruebas simulan PostgreSQL y bcrypt. Comprueban el comportamiento del backend y el uso del propietario en las consultas, pero no demuestran las restricciones, políticas RLS ni el aislamiento real de PostgreSQL. No se conectaron a Supabase para esta verificación.
 

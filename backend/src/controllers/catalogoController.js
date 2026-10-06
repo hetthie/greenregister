@@ -1,4 +1,18 @@
 import pool from "../config/db.js"
+import { validarId } from '../utils/validarId.js';
+
+export async function obtenerCatalogo(req, res) {
+    const { id } = req.params;
+    if (!validarId(id)) return res.status(400).json({ message: 'Identificador de catalogo invalido' });
+    try {
+        const resultado = await pool.query('SELECT * FROM catalogo WHERE id_catalogo = $1', [id]);
+        if (resultado.rows.length === 0) return res.status(404).json({ message: 'Especie no encontrada en el catalogo' });
+        return res.status(200).json(resultado.rows[0]);
+    } catch (error) {
+        console.error('Error al obtener la especie:', error);
+        return res.status(500).json({ message: 'Error al obtener la especie del catalogo' });
+    }
+}
 
 export async function listarCatalogo(req,res){
 

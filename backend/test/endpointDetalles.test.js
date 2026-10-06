@@ -81,6 +81,44 @@ describe('DELETE /plantas/:id', () => {
   });
 });
 
+describe('GET /catalogo/:id', () => {
+  it.each([null, 'invalido'])('requiere JWT valido: %s', async authorization => {
+    const res = await request('/catalogo/3', authorization);
+    expect(res.status).toBe(401);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+  it.each(['0', '-1', 'abc', '1.5', '2147483648'])('rechaza id %s', async id => {
+    const res = await request(`/catalogo/${id}`);
+    expect(res.status).toBe(400);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+  it('devuelve una especie como objeto', async () => {
+    const especie = { id_catalogo: 3, cat_tipo: 'Menta' };
+    pool.query.mockResolvedValue({ rows: [especie] });
+    const res = await request('/catalogo/3');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(especie);
+    expect(pool.query).toHaveBeenCalledWith('SELECT * FROM catalogo WHERE id_catalogo = $1', ['3']);
+  });
+  it('devuelve 404 cuando la especie no existe', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    const res = await request('/catalogo/3');
+    expect(res.status).toBe(404);
+  });
+  it('oculta los errores internos', async () => {
+    pool.query.mockRejectedValue(new Error('detalle confidencial'));
+    const res = await request('/catalogo/3');
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ message: 'Error al obtener la especie del catalogo' });
+  });
+  it('mantiene accesible horticultura', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    const res = await request('/catalogo/3/horticultura');
+    expect(res.status).toBe(404);
+    expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('FROM horticultura'), ['3']);
+  });
+});
+
 describe('GET /plantas/:id', () => {
   it.each([null, 'invalido'])('requiere JWT valido: %s', async authorization => {
     const res = await request('/plantas/12', authorization);
