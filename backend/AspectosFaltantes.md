@@ -2,19 +2,21 @@
 
 Este documento recoge los aspectos pendientes identificados mediante una revisión estática de la carpeta `backend`. Incluye lógica de negocio, base de datos, API, seguridad, pruebas y operación. No se ejecutaron pruebas ni conexiones a PostgreSQL; por tanto, las restricciones existentes directamente en la base de datos quedan sin verificar.
 
+Actualización del 6 de octubre de 2026: se implementaron consultas por ID de plantas y catálogo, eliminación de plantas, validaciones de las rutas actuales y manejo compartido de errores. La suite se ejecutó con 166 pruebas aprobadas y PostgreSQL simulado; no se conectó a la base de datos real. El esquema compartido en la conversación incluye claves foráneas, pero no una tabla de actividades ni una restricción única de correo.
+
 ## 1. Lógica de negocio
 
 ### Reglas de las plantas
 
-- Definir y validar qué nombres son aceptables: campos obligatorios, longitud, espacios y tipos de datos.
+- Implementado: nombres de plantas obligatorios, textuales, de 1 a 100 caracteres después de recortar espacios y sin caracteres de control.
 - Establecer si un usuario puede registrar plantas con nombres repetidos.
 - Definir qué registros del catálogo pueden asociarse a una planta y cómo responder cuando la asociación no es válida.
-- Precisar el ciclo de vida de una planta. Actualmente existen creación, listado y cambio de nombre; debe determinarse si el producto necesita eliminación, archivo u otros estados.
+- Actualmente existen creación, listado, consulta individual, cambio de nombre y eliminación física por propietario. Definir si el producto necesita archivo u otros estados.
 
 ### Usuarios y cuentas
 
 - Definir la normalización del correo antes de registrarlo o buscarlo, incluyendo espacios y tratamiento de mayúsculas.
-- Establecer las reglas de contraseña y validar los tipos y formatos de los datos del usuario.
+- Implementado: validación de nombre, apellido, correo y contraseña en las rutas; registro exige al menos 8 caracteres y hasta 72 bytes de contraseña. Login conserva compatibilidad con contraseñas antiguas más cortas.
 - Determinar si existen cuentas inactivas o eliminadas y cómo afectan al acceso. Actualmente se verifica el JWT, pero no se consulta si la cuenta sigue habilitada.
 
 ### Información del catálogo
@@ -48,16 +50,16 @@ Este documento recoge los aspectos pendientes identificados mediante una revisi�
 
 ### Validación de solicitudes
 
-- Crear y actualizar plantas no validan los campos recibidos.
-- Los identificadores de las rutas no se validan antes de consultar PostgreSQL.
-- Registro y login comprueban presencia de valores, pero no tipos, formatos ni longitudes.
-- Las entradas inválidas deben generar respuestas previsibles y diferenciadas de los fallos internos.
+- Implementado: las rutas de creación y actualización de plantas validan cuerpos, nombres y catálogo requerido.
+- Implementado: todas las rutas actuales con identificador lo validan antes de consultar PostgreSQL.
+- Implementado: las rutas de registro y login validan tipos, formatos y longitudes.
+- Implementado: entradas inválidas responden `400`; los fallos internos responden `500` con mensaje público sin detalles internos.
 
 ### Respuestas y errores
 
 - Definir un formato consistente para respuestas exitosas y errores. Actualmente algunas respuestas son colecciones directas y otras contienen mensajes y objetos.
-- Diferenciar datos inválidos, recursos inexistentes, conflictos y fallos de infraestructura.
-- No aparece un middleware centralizado de errores; los controladores manejan errores individualmente.
+- Implementado: códigos diferenciados para datos inválidos (`400`), recursos inexistentes (`404`), conflictos (`409`) y fallos internos (`500`), además de errores del parser JSON.
+- Implementado: traductor compartido para errores de controladores y middleware final de Express. Todas las respuestas de error usan `{ message }`.
 
 ### Documentación
 
@@ -75,10 +77,9 @@ Este documento recoge los aspectos pendientes identificados mediante una revisi�
 
 ## 5. Pruebas y verificación
 
-- Existen tres pruebas unitarias del registro con dependencias simuladas.
-- No se encontraron pruebas de login, middleware de autenticación, plantas ni catálogo.
-- Falta comprobar que un usuario no pueda consultar o modificar plantas de otro.
-- Cubrir entradas inválidas, tokens ausentes o expirados, recursos inexistentes y fallos de base de datos.
+- Existen 166 pruebas en cinco archivos para registro, login, middleware, plantas, catálogo, rutas HTTP, validaciones y errores, con dependencias simuladas.
+- Se comprueba el uso del propietario autenticado en las consultas; falta verificar el aislamiento real con PostgreSQL.
+- Se cubren entradas inválidas, tokens ausentes o expirados, recursos inexistentes y fallos simulados de base de datos.
 - Verificar la integridad y el comportamiento ante registros concurrentes con pruebas adecuadas.
 - Incorporar pruebas de integración para comprobar los flujos y las restricciones reales de PostgreSQL.
 

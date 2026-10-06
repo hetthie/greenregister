@@ -79,7 +79,7 @@ describe('rutas HTTP con base de datos simulada', () => {
     pool.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id_usuario: 7 }] });
     bcrypt.hash.mockResolvedValue('hash');
     const res = await request('POST', '/auth/register', {
-      usuario_nombre: 'Ana', usuario_apellido: 'Perez', usuario_email: 'ana@example.com', usuario_password: 'clave',
+      usuario_nombre: 'Ana', usuario_apellido: 'Perez', usuario_email: 'ana@example.com', usuario_password: 'clave-segura',
     });
     expect(res.status).toBe(201);
     expect((await res.json()).user.id_usuario).toBe(7);

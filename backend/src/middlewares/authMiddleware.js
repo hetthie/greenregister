@@ -12,6 +12,10 @@ export function authMiddleware(req, res, next) {
     const token = authHeader.split(' ')[1]; //se extrae el token del header
     try{
         const payload = jwt.verify(token, process.env.JWT_SECRET); //se verifica el token con la clave secreta
+        if (!payload || !Number.isInteger(payload.id_usuario)
+            || payload.id_usuario <= 0 || payload.id_usuario > 2147483647) {
+            return res.status(401).json({ message: 'No autorizado, token invalido' });
+        }
 
         //se guardan datos del usuario
         req.usuario = payload;

@@ -33,7 +33,7 @@ describe('registerUser', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('devuelve 400 si el email ya existe', async () => {
+  it('devuelve 409 si el email ya existe', async () => {
     // Simulamos que pool.query devuelve una fila (el email ya está registrado)
     pool.query.mockResolvedValueOnce({ rows: [{ id_usuario: 1 }] });
 
@@ -52,7 +52,7 @@ describe('registerUser', () => {
 
     await register(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(409);
     expect(res.json).toHaveBeenCalledWith({ message: 'El correo ya esta registrado' });
   });
 

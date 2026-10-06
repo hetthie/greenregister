@@ -1,5 +1,6 @@
 import  pool  from "../config/db.js"; //importamos la conexion a la base de datos
 import { validarId } from '../utils/validarId.js';
+import { responderError } from '../middlewares/errorMiddleware.js';
 
 export async function eliminarPlanta(req, res) {
     const { id } = req.params;
@@ -19,8 +20,7 @@ export async function eliminarPlanta(req, res) {
         if (error.code === '23503') {
             return res.status(409).json({ message: 'La planta tiene registros asociados y no puede eliminarse' });
         }
-        console.error('Error al eliminar la planta:', error);
-        return res.status(500).json({ message: 'Error al eliminar la planta' });
+        return responderError(error, res, 'Error al eliminar la planta');
     }
 }
 
@@ -39,8 +39,7 @@ export async function obtenerPlanta(req, res) {
         }
         return res.status(200).json(resultado.rows[0]);
     } catch (error) {
-        console.error('Error al obtener la planta:', error);
-        return res.status(500).json({ message: 'Error al obtener la planta' });
+        return responderError(error, res, 'Error al obtener la planta');
     }
 }
 
@@ -58,9 +57,10 @@ export async function crearPlanta(req,res){
 
         res.status(201).json({ message: 'Planta registrada exitosamente', planta: resultado.rows[0] });
     }catch(error){
-        console.error('Error al registrar planta:', error);
-        res.status(500).json({ message: 'Error interno al crear la planta' }
-        );
+        if (error.code === '23503' && error.constraint === 'planta_id_catalogo_fk_fkey') {
+            return res.status(400).json({ message: 'El catalogo indicado no existe' });
+        }
+        return responderError(error, res, 'Error interno al crear la planta');
     }
 }
 
@@ -77,8 +77,7 @@ export async function listarPlantas(req,res){
 
         res.status(200).json(resultado.rows);
     }catch(error){
-        console.error('error al listar las plantas',error.message);
-        res.status(500).json({message: 'error al obtener las plantas'})
+        return responderError(error, res, 'Error al obtener las plantas');
     }
 }
 
@@ -100,7 +99,6 @@ export async function actualizarPlanta(req,res){
 
         return res.status(200).json(resultado.rows[0]);
     }catch(error){
-        console.error('Error al actualizar la planta',error);
-        res.status(500).json({message: 'Error al actualziar la planta.'})
+        return responderError(error, res, 'Error al actualizar la planta');
     }
 }

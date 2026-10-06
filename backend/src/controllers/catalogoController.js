@@ -1,5 +1,6 @@
 import pool from "../config/db.js"
 import { validarId } from '../utils/validarId.js';
+import { responderError } from '../middlewares/errorMiddleware.js';
 
 export async function obtenerCatalogo(req, res) {
     const { id } = req.params;
@@ -9,8 +10,7 @@ export async function obtenerCatalogo(req, res) {
         if (resultado.rows.length === 0) return res.status(404).json({ message: 'Especie no encontrada en el catalogo' });
         return res.status(200).json(resultado.rows[0]);
     } catch (error) {
-        console.error('Error al obtener la especie:', error);
-        return res.status(500).json({ message: 'Error al obtener la especie del catalogo' });
+        return responderError(error, res, 'Error al obtener la especie del catalogo');
     }
 }
 
@@ -23,8 +23,7 @@ export async function listarCatalogo(req,res){
 
         return res.status(200).json(resultado.rows);
     }catch(error){
-        console.error('error al consultar el catalogo de plantas');
-        res.status(500).json({message: 'error al mostrar el catalogo'});
+        return responderError(error, res, 'Error al mostrar el catalogo');
     }
 }
 
@@ -63,8 +62,7 @@ export async function obtenerMedicinaPorCatalogo(req,res){
 
         res.status(200).json(resultado);
     }catch(error){
-        console.error('error al obtener la medicina',error);
-        res.status(500).json({message:'Error al obtener informacion medicinal'});
+        return responderError(error, res, 'Error al obtener informacion medicinal');
     }
 }
 
@@ -100,8 +98,7 @@ export async function obtenerComidaPorCatalogo(req,res){
 
         res.status(200).json(resultado);
     }catch(error){
-        console.error('Error al optener los componetes',error);
-        res.status(500).json({message: 'Error al obtener los componetes de la comida.'});
+        return responderError(error, res, 'Error al obtener informacion alimentaria');
     }
 }
 
@@ -119,7 +116,6 @@ export async function obtenerHorticulturaPorCatalogo(req,res){
 
         res.status(200).json(resultado.rows);
      }catch(error){
-        console.error("El no se pudo realizar la busqueda",error);
-        res.status(500).json({message: "El no se pudo realizar la busqueda"});
+        return responderError(error, res, 'Error al obtener informacion de horticultura');
      }
 }

@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';// para hashear la contrasenia
 import pool from '../config/db.js';// para la conexion a la base de datos
 import jwt from 'jsonwebtoken';
+import { responderError } from '../middlewares/errorMiddleware.js';
 
 //control del registro de usuarios
 export async function register(req, res) {
@@ -18,7 +19,7 @@ export async function register(req, res) {
         );//extraemos al usuario existente
 
         if(existe.rows.length > 0){
-            return res.status(400).json({ message: 'El correo ya esta registrado' });
+            return res.status(409).json({ message: 'El correo ya esta registrado' });
         }//comprobamos que el correo no este registrado
 
         const passwordHasheada = await bcrypt.hash(usuario_password, 10); // se hashea la contraseña con un salt de 10
@@ -30,8 +31,7 @@ export async function register(req, res) {
         );
         res.status(201).json({ message: 'Usuario registrado exitosamente', user: resultado.rows[0] });
     } catch (error) {//revisamos si hubo algun error en la conexion a la base de datos
-        console.error('Error al registrar usuario:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        return responderError(error, res);
     }
     
 }
@@ -80,8 +80,7 @@ export async function login(req,res){
         res.json({token});
 
     }catch(error){
-        console.error('Error al iniciar sesión:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        return responderError(error, res);
     }
 
 }

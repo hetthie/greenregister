@@ -289,7 +289,7 @@ Estado verificado en la rama `v1` el 5 de octubre de 2026. Esta actualización s
 - [x] Consulta de catálogo, medicina con componentes, comida con ingredientes y horticultura.
 - [x] Pruebas de autenticación, middleware, plantas, catálogo y rutas HTTP.
 - [ ] Módulo de actividades de cuidado e historial.
-- [ ] Validación completa de tipos, formatos, longitudes e identificadores.
+- [x] Validación de cuerpos JSON, tipos, formatos, longitudes e identificadores de los endpoints actuales.
 - [ ] Definición de reglas de duplicados y ciclo de vida de plantas y cuentas.
 - [ ] Esquema y migraciones de PostgreSQL versionados en `backend`.
 - [ ] Pruebas de integración contra PostgreSQL para verificar restricciones y concurrencia.
@@ -310,6 +310,25 @@ Estado verificado en la rama `v1` el 5 de octubre de 2026. Esta actualización s
 - Las pantallas móviles que usan `/my-plants` necesitan adaptarse a `/plantas`. Esta implementación se limita al backend.
 
 ### Ejecución de pruebas
+
+### Validación y errores (6 de octubre de 2026)
+
+Las rutas actuales validan entradas antes de consultar PostgreSQL:
+
+- Registro: nombre y apellido de 1 a 100 caracteres después de recortar espacios; correo con formato básico y máximo de 254 caracteres; contraseña de al menos 8 caracteres y máximo de 72 bytes UTF-8, sin carácter nulo ni valores compuestos solo por espacios.
+- Login: valida correo y contraseña textual de 1 a 72 bytes, conservando compatibilidad con contraseñas antiguas más cortas. Las contraseñas no se recortan ni transforman.
+- El correo se recorta sin convertirlo a minúsculas para conservar compatibilidad con registros existentes. Unificar mayúsculas y minúsculas requiere definir la política y adaptar los datos y restricciones.
+- Crear y actualizar plantas: nombre de 1 a 100 caracteres, sin caracteres de control. Crear exige un `id_catalogo_fk` entero positivo, numérico o cadena decimal, dentro del rango PostgreSQL `INTEGER`.
+- Todas las rutas con `:id` validan un entero positivo dentro de ese rango; el JWT debe contener un `id_usuario` entero positivo válido.
+- Los campos adicionales no permiten cambiar el propietario: los controladores continúan usando exclusivamente el usuario del JWT.
+
+Todos los errores responden JSON con `{ "message": "..." }`. Los cuerpos malformados responden `400`, los mayores de 100kb responden `413`, la codificación no admitida responde `415` y las rutas desconocidas responden `404`. Los conflictos de unicidad responden `409`, incluido un correo ya registrado (antes respondía `400`). Un catálogo inexistente detectado por su clave foránea al crear una planta responde `400`. Los errores internos responden `500` sin enviar detalles de PostgreSQL, SQL ni stack al cliente.
+
+`src/app.js` reúne la aplicación y sus middlewares; `server.js` inicia la escucha. Los controladores utilizan un traductor compartido de errores y los errores de Express pasan por el middleware final.
+
+Verificación de esta actualización: **166 pruebas aprobadas en 5 archivos**, incluyendo `backend/test/validationErrors.test.js`, que prueba la aplicación real por HTTP con PostgreSQL y bcrypt simulados. No se modificó el esquema de Supabase; la prevención de duplicados concurrentes sigue dependiendo de una restricción única en PostgreSQL.
+
+### Comandos
 
 ```bash
 cd backend
