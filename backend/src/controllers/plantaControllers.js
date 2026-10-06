@@ -1,6 +1,29 @@
 import  pool  from "../config/db.js"; //importamos la conexion a la base de datos
 import { validarId } from '../utils/validarId.js';
 
+export async function eliminarPlanta(req, res) {
+    const { id } = req.params;
+    if (!validarId(id)) {
+        return res.status(400).json({ message: 'Identificador de planta invalido' });
+    }
+    try {
+        const resultado = await pool.query(
+            'DELETE FROM planta WHERE id_planta = $1 AND id_usuario_fk = $2 RETURNING id_planta',
+            [id, req.usuario.id_usuario]
+        );
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ message: 'Planta no encontrada.' });
+        }
+        return res.status(204).end();
+    } catch (error) {
+        if (error.code === '23503') {
+            return res.status(409).json({ message: 'La planta tiene registros asociados y no puede eliminarse' });
+        }
+        console.error('Error al eliminar la planta:', error);
+        return res.status(500).json({ message: 'Error al eliminar la planta' });
+    }
+}
+
 export async function obtenerPlanta(req, res) {
     const { id } = req.params;
     if (!validarId(id)) {

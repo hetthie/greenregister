@@ -175,6 +175,7 @@ POST /auth/login     → Iniciar sesión (devuelve JWT)
 POST /plantas   → Registrar una planta propia
 GET  /plantas   → Listar mis plantas
 GET  /plantas/:id → Consultar una planta propia
+DELETE /plantas/:id → Eliminar una planta propia
 PUT  /plantas/:id → Actualizar el nombre de una planta propia
 ```
 
@@ -300,6 +301,7 @@ Estado verificado en la rama `v1` el 5 de octubre de 2026. Esta actualización s
 ### Endpoints incorporados el 6 de octubre de 2026
 
 - `GET /plantas/:id`: devuelve un objeto planta (`200`). Requiere JWT y filtra por el propietario del token. Devuelve `400` para un ID inválido, `404` si no existe o pertenece a otro usuario y `500` ante un fallo interno.
+- `DELETE /plantas/:id`: elimina una planta del usuario autenticado y responde `204` sin cuerpo. Devuelve `400` para un ID inválido, `404` si no existe o pertenece a otro usuario, `409` si una clave foránea impide eliminarla y `500` ante otros fallos. La eliminación es física; las relaciones y posibles cascadas dependen del esquema existente de PostgreSQL. No modifica las tablas ni sus restricciones.
 - Los nuevos identificadores deben ser enteros positivos, sin ceros iniciales, dentro del rango PostgreSQL `INTEGER` (hasta `2147483647`).
 - Cada endpoint se incorpora mediante un commit independiente con su implementación, pruebas y documentación. Esta actualización no implica un despliegue ni cambios en Supabase.
 

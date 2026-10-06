@@ -43,6 +43,44 @@ const request = (path, authorization = token, method = 'GET') => fetch(`${baseUr
   headers: authorization ? { Authorization: `Bearer ${authorization}` } : {},
 });
 
+describe('DELETE /plantas/:id', () => {
+  it.each([null, 'invalido'])('requiere JWT valido: %s', async authorization => {
+    const res = await request('/plantas/12', authorization, 'DELETE');
+    expect(res.status).toBe(401);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+  it.each(['0', '-1', 'abc', '2147483648'])('rechaza id %s', async id => {
+    const res = await request(`/plantas/${id}`, token, 'DELETE');
+    expect(res.status).toBe(400);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+  it('elimina solo una planta del propietario y responde sin cuerpo', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id_planta: 12 }] });
+    const res = await request('/plantas/12', token, 'DELETE');
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe('');
+    expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM planta WHERE id_planta = $1 AND id_usuario_fk = $2'), ['12', 7]);
+  });
+  it('devuelve 404 si no coincide id y propietario', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    const res = await request('/plantas/12', token, 'DELETE');
+    expect(res.status).toBe(404);
+    expect(pool.query.mock.calls[0][1]).toEqual(['12', 7]);
+  });
+  it('devuelve 409 ante una restriccion de clave foranea', async () => {
+    pool.query.mockRejectedValue(Object.assign(new Error('FK'), { code: '23503' }));
+    const res = await request('/plantas/12', token, 'DELETE');
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ message: 'La planta tiene registros asociados y no puede eliminarse' });
+  });
+  it('devuelve 500 sin exponer el error interno', async () => {
+    pool.query.mockRejectedValue(new Error('detalle confidencial'));
+    const res = await request('/plantas/12', token, 'DELETE');
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ message: 'Error al eliminar la planta' });
+  });
+});
+
 describe('GET /plantas/:id', () => {
   it.each([null, 'invalido'])('requiere JWT valido: %s', async authorization => {
     const res = await request('/plantas/12', authorization);
