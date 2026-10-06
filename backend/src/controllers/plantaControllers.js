@@ -1,4 +1,25 @@
 import  pool  from "../config/db.js"; //importamos la conexion a la base de datos
+import { validarId } from '../utils/validarId.js';
+
+export async function obtenerPlanta(req, res) {
+    const { id } = req.params;
+    if (!validarId(id)) {
+        return res.status(400).json({ message: 'Identificador de planta invalido' });
+    }
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM planta WHERE id_planta = $1 AND id_usuario_fk = $2',
+            [id, req.usuario.id_usuario]
+        );
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ message: 'Planta no encontrada.' });
+        }
+        return res.status(200).json(resultado.rows[0]);
+    } catch (error) {
+        console.error('Error al obtener la planta:', error);
+        return res.status(500).json({ message: 'Error al obtener la planta' });
+    }
+}
 
 export async function crearPlanta(req,res){
     //nombre y catalogo de la planta en lapeticion
